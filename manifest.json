@@ -1,1 +1,32 @@
-// It contains metadata and configurations required by the Chrome browser 
+{
+  "manifest_version": 3,
+  "name": "AI Powered Coding Assistant",
+  "version": "0.1",
+  "author": "Kartik Walia",
+  "description": "A Chrome Extension that leverages OpenAI API for coding assistance",
+  "permissions": ["storage", "tabs"],
+  "content_scripts": [
+    {
+      "matches": ["https://maang.in/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "16": "assets/extension-icon.png",
+      "24": "assets/extension-icon.png",
+      "32": "assets/extension-icon.png"
+    },
+    "default_popup": "popup.html",
+    "default_title": "AI Powered Coding Assistant"
+  }
+}
