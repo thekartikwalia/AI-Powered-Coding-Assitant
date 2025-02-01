@@ -2,9 +2,20 @@
 // It contains scripts that run directly on the webpages you visit
 // It allows the extension to interact with and manipulate the DOM of those pages
 
-window.addEventListener("load", addAiHelpButton);
+const observer = new MutationObserver(() => {
+  addAiHelpButton();
+});
+observer.observe(document.body, { childList: true, subtree: true });
+
+addAiHelpButton();
+
+function onProblemsPage() {
+  return window.location.pathname.startsWith("/problems/");
+}
 
 function addAiHelpButton() {
+  if (!onProblemsPage || document.getElementById("ai-help-button")) return;
+
   const askDoubtButton = document.getElementsByClassName(
     "coding_ask_doubt_button__FjwXJ"
   )[0];
