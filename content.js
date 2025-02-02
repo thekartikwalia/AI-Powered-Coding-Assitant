@@ -20,11 +20,13 @@ function addAiHelpButton() {
     "coding_ask_doubt_button__FjwXJ"
   )[0];
 
+  if (!askDoubtButton) return;
+
   const aiHelpButton = document.createElement("button");
   aiHelpButton.id = "ai-help-button";
   aiHelpButton.type = "button";
   aiHelpButton.className =
-    "ant-btn css-19gw05y ant-btn-default Button_gradient_light_button__ZDAR_ ai-help-button gap-1 py-2 px-3 overflow-hidden";
+    "ant-btn css-19gw05y ant-btn-default coding_ask_doubt_button__FjwXJ Button_gradient_light_button__ZDAR_ ai-help-button gap-1 py-2 px-3 overflow-hidden";
   aiHelpButton.style.height = "fit-content";
 
   const svgElement = document.createElementNS(
