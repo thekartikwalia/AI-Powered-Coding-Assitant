@@ -63,4 +63,18 @@ function addAiHelpButton() {
   aiHelpButton.appendChild(spanElement);
 
   askDoubtButton.insertAdjacentElement("beforebegin", aiHelpButton);
+
+  const parentDiv = document.getElementsByClassName(
+    "d-flex align-items-start align-items-sm-center justify-content-between flex-column flex-sm-row"
+  )[0];
+
+  const buttonWrapper = document.createElement("div");
+  buttonWrapper.classList.add("button-container");
+  buttonWrapper.style.display = "flex";
+  buttonWrapper.style.gap = "10px";
+
+  buttonWrapper.appendChild(askDoubtButton);
+  buttonWrapper.appendChild(aiHelpButton);
+  
+  parentDiv.appendChild(buttonWrapper);
 }
