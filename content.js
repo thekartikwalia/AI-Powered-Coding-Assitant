@@ -10,7 +10,7 @@ const CHAT_BOX_MODAL_CLOSE_BUTTON_ID = "close-ai-chatbox-modal-button";
 const CHAT_BOX_MESSAGES_CONTAINER_ID = "chat-messages-container";
 const CHAT_INPUT_FIELD_ID = "chat-input-field";
 const SEND_CHAT_BUTTON_ID = "send-chat-btn";
-const GEMINI_API_KEY = "YOUR_API_KEY";
+const GEMINI_API_KEY = "YOUR-API-KEY";
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
@@ -251,12 +251,18 @@ const sendMessageButtonHandler = async () => {
 
   console.log("User Input: ", userInput);
 
-  // Send message to API and get response
-  const botReply = await sendMessageToAPI(userInput);
-  console.log("Bot reply: \n", botReply);
-
+  // Display user message in chatbox
+  displayMessage(userInput, "user");
+  
   // clear the input field after sending the message
   inputField.value = "";
+
+  // Send message to API and get response
+  const chatBotReply = await sendMessageToAPI(userInput);
+  console.log("Bot reply: \n", chatBotReply);
+
+  // Display bot response in chatbox 
+  displayMessage(chatBotReply, "bot");
 };
 
 async function sendMessageToAPI(userMessage) {
@@ -302,6 +308,31 @@ async function sendMessageToAPI(userMessage) {
     console.error("Error fetching AI response: ", error);
     return "An error occured while connecting to the API";
   }
+}
+
+function displayMessage(message, sender) {
+  const chatBoxMessagesContainer = document.getElementById(CHAT_BOX_MESSAGES_CONTAINER_ID);
+  if(!chatBoxMessagesContainer) return;
+
+  const messageElement = document.createElement("div");
+  messageElement.className = `d-flex my-2 px-2 ${
+    sender === "user" ? "justify-content-end" : "justify-content-start"
+  }`;
+
+  const messageBubble = document.createElement("div");
+  messageBubble.textContent = message;
+  messageBubble.className = `p-2 rounded ${
+    sender === "user"
+      ? "bg-primary text-white"
+      : "bg-light text-dark border border-secondary"
+  }`;
+  messageBubble.style.maxWidth = "70%";
+
+  messageElement.appendChild(messageBubble);
+  chatBoxMessagesContainer.appendChild(messageElement);
+
+  // Scroll to the bottom
+  chatBoxMessagesContainer.scrollTop = chatBoxMessagesContainer.scrollHeight;
 }
 
 function closeChatBoxModal() {
