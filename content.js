@@ -10,6 +10,9 @@ const CHAT_BOX_MODAL_CLOSE_BUTTON_ID = "close-ai-chatbox-modal-button";
 const CHAT_BOX_MESSAGES_CONTAINER_ID = "chat-messages-container";
 const CHAT_INPUT_FIELD_ID = "chat-input-field";
 const SEND_CHAT_BUTTON_ID = "send-chat-btn";
+const GEMINI_API_KEY = "YOUR_API_KEY";
+const GEMINI_API_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 function onProblemsPage() {
   const pathParts = window.location.pathname.split("/");
@@ -129,7 +132,7 @@ function cleanUpPage() {
 
   // TODO: Have to clean chat container as well
   const chatBoxModal = document.getElementById(CHAT_BOX_MODAL_ID);
-  if(chatBoxModal) chatBoxModal.remove();
+  if (chatBoxModal) chatBoxModal.remove();
 }
 
 // ============================================================== Chat Box ==============================================================
@@ -137,7 +140,9 @@ function openChatBox() {
   // const chatBoxModal = document.getElementById(CHAT_BOX_MODAL_ID);
   createChatBoxModal();
 
-  const closeAiChatBoxModalButton = document.getElementById(CHAT_BOX_MODAL_CLOSE_BUTTON_ID);
+  const closeAiChatBoxModalButton = document.getElementById(
+    CHAT_BOX_MODAL_CLOSE_BUTTON_ID
+  );
   closeAiChatBoxModalButton.addEventListener("click", closeChatBoxModal);
 }
 
@@ -145,29 +150,33 @@ function createChatBoxModal() {
   const chatBoxModal = document.createElement("div");
 
   chatBoxModal.id = CHAT_BOX_MODAL_ID;
-  chatBoxModal.className = "w-100 h-100 position-fixed d-flex align-items-start justify-content-center hide-scrollbar"; 
-  chatBoxModal.style = "z-index: 100; top: 0px; left: 0px; background-color: rgba(23, 43, 77, 0.8); backdrop-filter: blur(8px); overflow-y: auto;";
-  
+  chatBoxModal.className =
+    "w-100 h-100 position-fixed d-flex align-items-start justify-content-center hide-scrollbar";
+  chatBoxModal.style =
+    "z-index: 100; top: 0px; left: 0px; background-color: rgba(23, 43, 77, 0.8); backdrop-filter: blur(8px); overflow-y: auto;";
+
   // ChatBox Container
   const chatBoxContainer = document.createElement("section");
-  chatBoxContainer.className = "dmsans overflow-hidden p-4"; 
+  chatBoxContainer.className = "dmsans overflow-hidden p-4";
   chatBoxContainer.style = "max-width: 72rem;";
   chatBoxModal.appendChild(chatBoxContainer);
 
   // ChatBox Section
   const chatBoxSection = document.createElement("div");
-  chatBoxSection.className = "DoubtForum_new_post_modal_container__hJcF2 border_primary border_radius_12 d-flex flex-column";
+  chatBoxSection.className =
+    "DoubtForum_new_post_modal_container__hJcF2 border_primary border_radius_12 d-flex flex-column";
   chatBoxContainer.appendChild(chatBoxSection);
 
   // ChatBox Section Content Container
   const chatBoxSectionContentContainer = document.createElement("div");
-  chatBoxSectionContentContainer.className = "d-flex  justify-content-between flex-column p-4 position-relative";
+  chatBoxSectionContentContainer.className =
+    "d-flex  justify-content-between flex-column p-4 position-relative";
   chatBoxSection.appendChild(chatBoxSectionContentContainer);
 
   // Cross Button (close modal button)
   const crossButton = document.createElement("div");
   crossButton.id = CHAT_BOX_MODAL_CLOSE_BUTTON_ID;
-  crossButton.className = "d-flex justify-content-end position-absolute"; 
+  crossButton.className = "d-flex justify-content-end position-absolute";
   crossButton.style = "right: 2.5rem; top: 2rem;";
   crossButton.innerHTML = `
     <button type="button" class="ant-btn css-19gw05y ant-btn-text ant-btn-icon-only undefined DoubtForum_text_color__ndqRv  d-flex align-items-center justify-content-center">
@@ -179,22 +188,24 @@ function createChatBoxModal() {
         </span>
       </span>
     </button>
-  `
+  `;
   chatBoxSectionContentContainer.appendChild(crossButton);
 
-  // Modal Heading 
+  // Modal Heading
   const chatBoxModalHeading = document.createElement("div");
-  chatBoxModalHeading.className = "DoubtForum_text_color__ndqRv ruibk fs-3 fw-bold";
-  chatBoxModalHeading.textContent = "AI Powered Coding Assitant"
+  chatBoxModalHeading.className =
+    "DoubtForum_text_color__ndqRv ruibk fs-3 fw-bold";
+  chatBoxModalHeading.textContent = "AI Powered Coding Assitant";
   chatBoxSectionContentContainer.appendChild(chatBoxModalHeading);
-  
+
   // Modal Heading Separation Line
   const chatBoxModalHeadingSeparationLine = document.createElement("div");
-  chatBoxModalHeadingSeparationLine.className = "DoubtForum_border_bottom__59UoH mt-1";
+  chatBoxModalHeadingSeparationLine.className =
+    "DoubtForum_border_bottom__59UoH mt-1";
   chatBoxSectionContentContainer.appendChild(chatBoxModalHeadingSeparationLine);
 
-  // ChatBox Modal Introduction paragraph 
-  const chatBoxModalIntroPara =  document.createElement("div");
+  // ChatBox Modal Introduction paragraph
+  const chatBoxModalIntroPara = document.createElement("div");
   chatBoxModalIntroPara.className = "mb-3";
   chatBoxModalIntroPara.innerHTML = `
     <div class="row d-none d-sm-flex">
@@ -203,45 +214,97 @@ function createChatBoxModal() {
         Ask questions related to your current problem to receive accurate AI-generated assistance. The chatbot understands the context and provides tailored solutions to help you efficiently.
       </div>
     </div>
-  `
+  `;
   chatBoxSectionContentContainer.appendChild(chatBoxModalIntroPara);
 
   // Chatbox Meesages Container
   const chatBoxMessagesContainer = document.createElement("div");
   chatBoxMessagesContainer.id = CHAT_BOX_MESSAGES_CONTAINER_ID;
-  chatBoxMessagesContainer.class = "mt-3 p-3"; 
-  chatBoxMessagesContainer.style = "height: 300px; overflow-y: auto; background-color: white; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);";
+  chatBoxMessagesContainer.class = "mt-3 p-3";
+  chatBoxMessagesContainer.style =
+    "height: 300px; overflow-y: auto; background-color: white; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);";
   chatBoxSectionContentContainer.appendChild(chatBoxMessagesContainer);
 
-  // Chatbox Input Field 
+  // Chatbox Input Field
   const chatBoxInputField = document.createElement("div");
   chatBoxInputField.className = "d-flex mt-3";
   chatBoxInputField.innerHTML = `
     <input type="text" id="chat-input-field" class="form-control me-2" placeholder="Type your message..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
     <button id="send-chat-btn" class="btn btn-primary" style="padding: 10px 15px; border-radius: 8px;">Send</button>
-  `
+  `;
   chatBoxSectionContentContainer.appendChild(chatBoxInputField);
 
   // Event Listener on Send Button
   const sendButton = chatBoxInputField.querySelector(`#${SEND_CHAT_BUTTON_ID}`);
   sendButton.addEventListener("click", sendMessageButtonHandler);
 
-  document.body.insertAdjacentElement("beforeend", chatBoxModal);  
+  document.body.insertAdjacentElement("beforeend", chatBoxModal);
   return chatBoxModal;
 }
 
-function sendMessageButtonHandler() {
+const sendMessageButtonHandler = async () => {
   const inputField = document.querySelector(`#${CHAT_INPUT_FIELD_ID}`);
-  if (inputField) {
-    const userInput = inputField.value;
-    console.log(userInput);
+  if (!inputField) return;
 
-    // clear the input field after sending the message
-    inputField.value = '';
+  const userInput = inputField.value;
+  if (!userInput) return;
+
+  console.log("User Input: ", userInput);
+
+  // Send message to API and get response
+  const botReply = await sendMessageToAPI(userInput);
+  console.log("Bot reply: \n", botReply);
+
+  // clear the input field after sending the message
+  inputField.value = "";
+};
+
+async function sendMessageToAPI(userMessage) {
+  try {
+    // Prepare the payload
+    const payload = {
+      contents: [
+        {
+          parts: [{ text: userMessage }],
+        },
+      ],
+    };
+
+    // Send the request
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    // Parse the JSON response
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+
+    const responseData = await response.json();
+
+    // Extract AI response text from the API response
+    const aiResponse =
+      responseData.candidates &&
+      responseData.candidates[0] &&
+      responseData.candidates[0].content &&
+      responseData.candidates[0].content.parts &&
+      responseData.candidates[0].content.parts[0] &&
+      responseData.candidates[0].content.parts[0].text
+        ? responseData.candidates[0].content.parts[0].text
+        : "No response from the API.";
+    return aiResponse;
+    
+  } catch (error) {
+    console.error("Error fetching AI response: ", error);
+    return "An error occured while connecting to the API";
   }
 }
 
 function closeChatBoxModal() {
   const chatBoxModal = document.getElementById(CHAT_BOX_MODAL_ID);
-  if(chatBoxModal) chatBoxModal.remove(); 
+  if (chatBoxModal) chatBoxModal.remove();
 }
