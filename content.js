@@ -2,27 +2,80 @@
 // It contains scripts that run directly on the webpages you visit
 // It allows the extension to interact with and manipulate the DOM of those pages
 
-const observer = new MutationObserver(() => {
-  addAiHelpButton();
+// ============================================ Mutation observer to detect page change on SPA ============================================
+
+let lastUrl = "";
+
+function onProblemsPage() {
+  const pathParts = window.location.pathname.split("/");
+
+  return pathParts.length >= 3 && pathParts[1] == "problems" && pathParts[2];
+}
+
+function isUrlChanged() {
+  const currUrl = window.location.pathname;
+  if (currUrl != lastUrl) {
+    lastUrl = currUrl;
+    return true;
+  }
+
+  return false;
+}
+
+function areRequiredElementsLoaded() {
+  const problemTitle = document
+    .getElementsByClassName("Header_resource_heading__cpRp1")[0]
+    ?.textContent.trim(); // trim to remove trailing and leading whitespaces
+  const problemDescription = document
+    .getElementsByClassName("coding_desc__pltWY")[0]
+    ?.textContent.trim(); // trim to remove trailing and leading whitespaces
+
+  return problemTitle && problemDescription;
+}
+
+const observer = new MutationObserver((mutations) => {
+  mutations.forEach((mutation) => {
+    if (mutation.type === "childList" && onProblemsPage()) {
+      if (isUrlChanged() || !document.getElementById("ai-help-button")) {
+        if (areRequiredElementsLoaded()) {
+          cleanElements();
+          createElement();
+        }
+      }
+    }
+  });
 });
 observer.observe(document.body, { childList: true, subtree: true });
 
-addAiHelpButton();
-
-function onProblemsPage() {
-  return window.location.pathname.startsWith("/problems/");
-}
-
-function addAiHelpButton() {
-  if (!onProblemsPage || document.getElementById("ai-help-button")) return;
-
+// ====================================================== Element related Functions ======================================================
+function createElement() {
   const askDoubtButton = document.getElementsByClassName(
     "coding_ask_doubt_button__FjwXJ"
   )[0];
 
-  if (!askDoubtButton) return;
+  const buttonWrapper = createButtonWrapper();
+  askDoubtButton.insertAdjacentElement("beforebegin", buttonWrapper);
+  buttonWrapper.appendChild(askDoubtButton);
 
+  const aiHelpButton = createAiHelpButton();
+  buttonWrapper.appendChild(aiHelpButton);
+
+  // aiHelpButton.addEventListener("click", openChatBox);
+}
+
+function createButtonWrapper() {
+  const buttonWrapper = document.createElement("div");
+
+  buttonWrapper.classList.add("button-container");
+  buttonWrapper.style.display = "flex";
+  buttonWrapper.style.gap = "10px";
+
+  return buttonWrapper;
+}
+
+function createAiHelpButton() {
   const aiHelpButton = document.createElement("button");
+
   aiHelpButton.id = "ai-help-button";
   aiHelpButton.type = "button";
   aiHelpButton.className =
@@ -62,19 +115,10 @@ function addAiHelpButton() {
   aiHelpButton.appendChild(svgElement);
   aiHelpButton.appendChild(spanElement);
 
-  askDoubtButton.insertAdjacentElement("beforebegin", aiHelpButton);
+  return aiHelpButton;
+}
 
-  const parentDiv = document.getElementsByClassName(
-    "d-flex align-items-start align-items-sm-center justify-content-between flex-column flex-sm-row"
-  )[0];
-
-  const buttonWrapper = document.createElement("div");
-  buttonWrapper.classList.add("button-container");
-  buttonWrapper.style.display = "flex";
-  buttonWrapper.style.gap = "10px";
-
-  buttonWrapper.appendChild(askDoubtButton);
-  buttonWrapper.appendChild(aiHelpButton);
-  
-  parentDiv.appendChild(buttonWrapper);
+function cleanElements() {
+  const aiHelpButton = document.getElementById("ai-help-button");
+  if (aiHelpButton) aiHelpButton.remove();
 }
