@@ -13,6 +13,7 @@ const SEND_CHAT_BUTTON_ID = "send-chat-btn";
 const GEMINI_API_KEY = "YOUR-API-KEY";
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+let problemDetails = {};
 
 function onProblemsPage() {
   const pathParts = window.location.pathname.split("/");
@@ -253,7 +254,7 @@ const sendMessageButtonHandler = async () => {
 
   // Display user message in chatbox
   displayMessage(userInput, "user");
-  
+
   // clear the input field after sending the message
   inputField.value = "";
 
@@ -261,7 +262,7 @@ const sendMessageButtonHandler = async () => {
   const chatBotReply = await sendMessageToAPI(userInput);
   console.log("Bot reply: \n", chatBotReply);
 
-  // Display bot response in chatbox 
+  // Display bot response in chatbox
   displayMessage(chatBotReply, "bot");
 };
 
@@ -303,7 +304,7 @@ async function sendMessageToAPI(userMessage) {
         ? responseData.candidates[0].content.parts[0].text
         : "No response from the API.";
     return aiResponse;
-    
+
   } catch (error) {
     console.error("Error fetching AI response: ", error);
     return "An error occured while connecting to the API";
@@ -311,8 +312,10 @@ async function sendMessageToAPI(userMessage) {
 }
 
 function displayMessage(message, sender) {
-  const chatBoxMessagesContainer = document.getElementById(CHAT_BOX_MESSAGES_CONTAINER_ID);
-  if(!chatBoxMessagesContainer) return;
+  const chatBoxMessagesContainer = document.getElementById(
+    CHAT_BOX_MESSAGES_CONTAINER_ID
+  );
+  if (!chatBoxMessagesContainer) return;
 
   const messageElement = document.createElement("div");
   messageElement.className = `d-flex my-2 px-2 ${
@@ -338,4 +341,83 @@ function displayMessage(message, sender) {
 function closeChatBoxModal() {
   const chatBoxModal = document.getElementById(CHAT_BOX_MODAL_ID);
   if (chatBoxModal) chatBoxModal.remove();
+}
+
+// ======================================================= Extract Problem Details =======================================================
+function extractProblemDetails() {
+  // TODO : Extract data from intercepting API request
+  // Extract data from Webpage
+  const fallbackdetails = {
+    id: extractProblemNumber(),
+    title: document.getElementsByClassName("Header_resource_heading__cpRp1")[0]?.textContent || "",
+    description: document.getElementsByClassName("coding_desc__pltWY")[0]?.textContent || "",
+    inputFormat: document.getElementsByClassName("coding_input_format__pv9fS problem_paragraph")[0]?.textContent || "",
+    outputFormat: document.getElementsByClassName("coding_input_format__pv9fS problem_paragraph")[1]?.textContent || "",
+    constraints: document.getElementsByClassName("coding_input_format__pv9fS problem_paragraph")[2]?.textContent || "",
+    note: document.getElementsByClassName("coding_input_format__pv9fS problem_paragraph")[3]?.textContent || "",
+    inputOutput: extractInputOutput() || [],
+    userCode: extractUserCode() || "",
+  };
+
+  problemDetails = fallbackdetails;
+}
+
+function extractProblemNumber() {
+  const url = window.location.pathname;
+  const parts = url.split("/");
+  let lastPart = parts[parts.length - 1];
+
+  let number = "";
+  for (i = lastPart.length - 1; i >= 0; i--) {
+    if (isNaN(lastPart[i])) break;
+    number = lastPart[i] + number;
+  }
+
+  return number;
+}
+
+function extractUserCode() {
+  let localStorageData = extractLocalStorage();
+
+  const problemNo = extractProblemNumber();
+
+  let language = localStorageData['editor-language'] || "C++14";
+  if(language.startsWith('"') && language.endsWith('"')) {
+    language = language.slice(1, -1);  // -1 to end at the last character (but exclude it)
+  }
+
+  const expressionForKey = `_${problemNo}_${language}`;
+  for(let key in localStorageData) {
+    if(localStorageData.hasOwnProperty(key) && key.includes(expressionForKey) && key.endsWith(expressionForKey)) {
+      return localStorageData[key];
+    }
+  }
+  return '';
+}
+
+function extractLocalStorage() {
+  const localStorageData = {};
+
+  for(i=0; i<localStorage.length; i++) {
+    const key = localStorage.key(i);
+    localStorageData[key] = localStorage.getItem(key);
+  }
+
+  return localStorageData;
+}
+
+function extractInputOutput() {
+  const elements = document.querySelectorAll(".coding_input_format__pv9fS");
+  const inputOutputPairs = [];
+
+  for(let i=3; i<elements.length; i+=2) {
+    if(i+1 < elements.length) {
+      const input = elements[i]?.textContent?.trim() || "";
+      const output = elements[i+1]?.textContent?.trim() || "";
+      inputOutputPairs.push({input, output});
+    }
+  }
+
+  let jsonString = JSON.stringify(inputOutputPairs);
+  return jsonString.replace(/\\\\n/g, "\\n");
 }
