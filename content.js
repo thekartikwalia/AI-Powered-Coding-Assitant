@@ -291,7 +291,7 @@ const sendMessageButtonHandler = async () => {
   console.log("Bot reply: \n", chatBotReply);
 
   // Display bot response in chatbox
-  displayMessage(chatBotReply, "bot");
+  displayMessage(chatBotReply, "model");
 };
 
 async function sendMessageToAPI(userMessage) {
@@ -364,7 +364,11 @@ function displayMessage(message, sender) {
   }`;
 
   const messageBubble = document.createElement("div");
-  messageBubble.textContent = message;
+  if(sender === "model") {
+    messageBubble.innerHTML = DOMPurify.sanitize(marked.parse(message));
+  } else {
+    messageBubble.textContent = message;
+  }
   messageBubble.className = `p-2 rounded ${
     sender === "user"
       ? "bg-primary text-white"

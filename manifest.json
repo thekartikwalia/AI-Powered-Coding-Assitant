@@ -8,7 +8,7 @@
   "content_scripts": [
     {
       "matches": ["https://maang.in/*"],
-      "js": ["content.js"]
+      "js": ["libs/marked.min.js", "libs/purify.min.js", "content.js"]
     }
   ],
   "background": {
