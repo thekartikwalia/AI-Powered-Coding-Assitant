@@ -9,7 +9,7 @@
     {
       "matches": ["https://maang.in/*"],
       "css": ["libs/github.min.css"],
-      "js": ["libs/marked.min.js", "libs/purify.min.js", "libs/highlight.min.js", "content.js"]
+      "js": ["libs/marked.min.js", "libs/purify.min.js", "libs/highlight.min.js", "libs/jspdf.umd.min.js", "libs/html2pdf.bundle.js", "content.js"]
     }
   ],
   "background": {

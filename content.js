@@ -16,6 +16,8 @@ const GEMINI_API_URL =
 let problemDetails = {};
 let xhrInjectedData = "";
 let problemChatHistories = new Map();
+const DELETE_CHAT_BUTTON_ID = "delete-chat-btn";
+const EXPORT_CHAT_BUTTON_ID = "export-chat-btn";
 
 function onProblemsPage() {
   const pathParts = window.location.pathname.split("/");
@@ -173,6 +175,9 @@ function openChatBox() {
     CHAT_BOX_MODAL_CLOSE_BUTTON_ID
   );
   closeAiChatBoxModalButton.addEventListener("click", closeChatBoxModal);
+
+  // Attach all event listeners after the chatBox Modal is fully loaded 
+  attachEventListeners();
 }
 
 function createChatBoxModal() {
@@ -187,19 +192,21 @@ function createChatBoxModal() {
   // ChatBox Container
   const chatBoxContainer = document.createElement("section");
   chatBoxContainer.className = "dmsans overflow-hidden p-4";
-  chatBoxContainer.style = "max-width: 72rem;";
+  chatBoxContainer.style = "max-width: 50rem; height: 100%;";    // ensuring container takes full height
   chatBoxModal.appendChild(chatBoxContainer);
 
   // ChatBox Section
   const chatBoxSection = document.createElement("div");
   chatBoxSection.className =
     "DoubtForum_new_post_modal_container__hJcF2 border_primary border_radius_12 d-flex flex-column";
+  chatBoxSection.style = "height: 100%;";
   chatBoxContainer.appendChild(chatBoxSection);
 
   // ChatBox Section Content Container
   const chatBoxSectionContentContainer = document.createElement("div");
   chatBoxSectionContentContainer.className =
     "d-flex  justify-content-between flex-column p-4 position-relative";
+  chatBoxSectionContentContainer.style = "height: 100%;";
   chatBoxSection.appendChild(chatBoxSectionContentContainer);
 
   // Cross Button (close modal button)
@@ -238,8 +245,7 @@ function createChatBoxModal() {
   chatBoxModalIntroPara.className = "mb-3";
   chatBoxModalIntroPara.innerHTML = `
     <div class="row d-none d-sm-flex">
-      <div class="col-xl-3">&nbsp;</div>
-      <div class="DoubtForum_gradient_text__GhOgr mt-2 col-12 col-xl-9">
+      <div class="DoubtForum_gradient_text__GhOgr mt-2 col-12 col-xl-9 text-center w-auto">
         Ask questions related to your current problem to receive accurate AI-generated assistance. The chatbot understands the context and provides tailored solutions to help you efficiently.
       </div>
     </div>
@@ -251,24 +257,122 @@ function createChatBoxModal() {
   chatBoxMessagesContainer.id = CHAT_BOX_MESSAGES_CONTAINER_ID;
   chatBoxMessagesContainer.class = "mt-3 p-3";
   chatBoxMessagesContainer.style =
-    "height: 300px; overflow-y: auto; background-color: white; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);";
+    "height: 100%; overflow-y: auto; background-color: white; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);";
   chatBoxSectionContentContainer.appendChild(chatBoxMessagesContainer);
 
   // Chatbox Input Field
   const chatBoxInputField = document.createElement("div");
-  chatBoxInputField.className = "d-flex mt-3";
+  chatBoxInputField.className = "d-flex mt-3 gap-3";
   chatBoxInputField.innerHTML = `
-    <input type="text" id="chat-input-field" class="form-control me-2" placeholder="Type your message..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
-    <button id="send-chat-btn" class="btn btn-primary" style="padding: 10px 15px; border-radius: 8px;">Send</button>
+    <input type="text" id="chat-input-field" class="form-control" placeholder="Type your message..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+    <button id="send-chat-btn"
+      class="btn btn-primary py-2 px-4"
+      style="
+        border-radius: 8px;
+        background: linear-gradient(90deg, var(--gradient_dark_button_color_1), var(--gradient_dark_button_color_2));
+        border: none;
+        transition: background 0.3s ease-in-out;
+      "
+      onmouseover="this.style.background='linear-gradient(94deg, var(--gradient_dark_button_color_2) -0.03%, var(--gradient_dark_button_color_1) 99.97%)'"
+      onmouseout="this.style.background='linear-gradient(90deg, var(--gradient_dark_button_color_1), var(--gradient_dark_button_color_2))'"
+    >
+      Send
+    </button>
   `;
   chatBoxSectionContentContainer.appendChild(chatBoxInputField);
 
-  // Event Listener on Send Button
-  const sendButton = chatBoxInputField.querySelector(`#${SEND_CHAT_BUTTON_ID}`);
-  sendButton.addEventListener("click", sendMessageButtonHandler);
+  // Messages Container Separation Line
+  const chatBoxMessagesContainerSeparationLine = document.createElement("div");
+  chatBoxMessagesContainerSeparationLine.className =
+    "DoubtForum_border_bottom__59UoH mt-3";
+  chatBoxSectionContentContainer.appendChild(chatBoxMessagesContainerSeparationLine);
 
+  // Chat Actions Container (exporting chats and deleting chats from history)
+  const chatActionsContainer = document.createElement("div");
+  chatActionsContainer.className = "d-flex mt-3 justify-content-between";
+  chatActionsContainer.innerHTML = `
+    <button id="delete-chat-btn" class="ant-btn css-19gw05y ant-btn-default Button_icon_text_button__pApl_ coding_footer_console_button__fZJDe px-3 px-sm-4 py-2" style="border-radius: 8px;">Delete Chat</button>
+    <button id="export-chat-btn" class="ant-btn css-19gw05y ant-btn-default Button_icon_text_button__pApl_ coding_footer_console_button__fZJDe px-3 px-sm-4 py-2" style="border-radius: 8px;">Export Chat</button>
+  `;
+  chatBoxSectionContentContainer.appendChild(chatActionsContainer);
+  
   document.body.insertAdjacentElement("beforeend", chatBoxModal);
   return chatBoxModal;
+}
+
+function attachEventListeners() {
+  document.getElementById(SEND_CHAT_BUTTON_ID)?.addEventListener("click", sendMessageButtonHandler);
+  document.getElementById(DELETE_CHAT_BUTTON_ID)?.addEventListener("click", deleteChatHistoryButtonHandler);
+  document.getElementById(EXPORT_CHAT_BUTTON_ID)?.addEventListener("click", exportChatHistoryButtonHandler);
+}
+
+function deleteChatHistoryButtonHandler() {
+  console.log("delete chat button clicked");
+  const currentProblemId = problemDetails.problemId;
+  problemChatHistories.delete(currentProblemId);
+  saveChatHistories();
+  
+  const chatBoxMessagesContainer = document.getElementById(CHAT_BOX_MESSAGES_CONTAINER_ID);
+  if (chatBoxMessagesContainer) chatBoxMessagesContainer.innerHTML = "";
+}
+
+function exportChatHistoryButtonHandler() {
+  console.log("export chat button clicked");
+  const currentProblemId = problemDetails.problemId;
+  const chatHistory = problemChatHistories.get(currentProblemId) || [];
+
+  let formattedMessages = [];
+
+  chatHistory.forEach((message) => {
+    let messageText = message.parts[0]?.text;
+    messageText = messageText
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, "&")
+      .replace(/<\/?[^>]+(>|$)/g, "");
+
+    if (messageText) {
+      if (message.role === "user") {
+        formattedMessages.push(`**You:** ${messageText}`);
+      } else if (message.role === "model") {
+        formattedMessages.push(`**AI:** ${messageText}`);
+      }
+    }
+  });
+
+  const chatHistoryFormatted = formattedMessages.join('\n\n');
+
+  // Convert Markdown to HTML using marked.parse() & render it safely using DOMPurify
+  const htmlContent = DOMPurify.sanitize(marked.parse(chatHistoryFormatted));
+
+  // Temporarily create an element to render the markdown as HTML
+  const markdownContainer = document.createElement('div');
+  markdownContainer.innerHTML = htmlContent;
+
+  // Apply syntax highlighting to code blocks
+  // Highlight.js will automatically highlight <code> blocks if we call it on the container
+  const codeBlocks = markdownContainer.querySelectorAll('pre code');
+  codeBlocks.forEach(block => {
+    hljs.highlightBlock(block); // Highlight the block using highlight.js
+  });
+
+  // Now apply the necessary styling (GitHub style) to the code blocks
+  markdownContainer.querySelectorAll('pre').forEach(preBlock => {
+    preBlock.classList.add('hljs'); // Add GitHub style classes to the <pre> elements
+  });
+
+  // Use html2pdf to convert the HTML to a PDF
+  html2pdf()
+    .from(markdownContainer)
+    .set({
+      margin: [10, 5, 10, 5], // Set margins (top, right, bottom, left) in mm
+      filename: `chat-history-of-${problemDetails?.title || "problem-statement"}.pdf`,
+      html2canvas: { scale: 2 }, // Optional: improves the rendering quality of images and text
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } // Optional: sets paper format
+    })
+    .save(`chat-history-of-${problemDetails?.title || "problem-statement"}.pdf`);
 }
 
 const sendMessageButtonHandler = async () => {
@@ -378,9 +482,11 @@ function displayMessage(message, sender) {
   messageBubble.className = `p-2 rounded ${
     sender === "user"
       ? "bg-primary text-white"
-      : "bg-light text-dark border border-secondary"
+      : "text-dark border border-secondary"
   }`;
-  messageBubble.style.maxWidth = "70%";
+  messageBubble.style = sender === "user"
+  ? "max-width: 70%; background: linear-gradient(90deg,var(--gradient_dark_button_color_1),var(--gradient_dark_button_color_2));"
+  : "max-width: 70%; background: linear-gradient(to left, var(--gradient_light_button_color_1) 0, var(--gradient_light_button_color_2));"; 
 
   messageElement.appendChild(messageBubble);
   chatBoxMessagesContainer.appendChild(messageElement);
