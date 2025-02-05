@@ -365,7 +365,13 @@ function displayMessage(message, sender) {
 
   const messageBubble = document.createElement("div");
   if(sender === "model") {
+    // Sanitize & Render Markdown
     messageBubble.innerHTML = DOMPurify.sanitize(marked.parse(message));
+
+    // Apply Syntax Highlighting to Code Blocks
+    messageBubble.querySelectorAll("pre code").forEach((block) => {
+      hljs.highlightElement(block);
+    });
   } else {
     messageBubble.textContent = message;
   }
