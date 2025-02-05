@@ -43,6 +43,7 @@ function areRequiredElementsLoaded() {
   return problemTitle && problemDescription;
 }
 
+addInjectScript();
 const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
     addInjectScript();
@@ -357,13 +358,14 @@ function extractProblemDetails() {
   try {
     // Parse the response string into a JavaScript object
     parsedData = JSON.parse(xhrInjectedData.response)?.data || {};
+    console.log("Parsed xhrInjectedData.response successfully!");
   } catch (error) {
     alert("Some information wasn't loaded");
     console.error("Failed to parse xhrInjectedData.response: ", error);
     parsedData = {};
   }
   const xhrInjectedDetails = {
-    id: (parsedData?.id).toString() || "",
+    id: parsedData?.id != null ? parsedData.id.toString() : "",
     title: parsedData?.title || "",
     description: parsedData?.body || "",
     inputFormat: parsedData?.input_format || "",
@@ -373,9 +375,10 @@ function extractProblemDetails() {
     editorialCode: parsedData?.editorial_code || [],
     hints: parsedData?.hints || {},
     samples: parsedData?.samples || [],
-    timeLimit: (parsedData?.time_limit_sec).toString() || "",
-    memoryLimit: (parsedData?.memory_limit_mb).toString() || "",
+    timeLimit: parsedData?.time_limit_sec != null ? parsedData.time_limit_sec.toString() : "",
+    memoryLimit: parsedData?.memory_limit_mb != null ? parsedData.memory_limit_mb.toString() : "",
   };
+  console.log("parsedData from xhr: \n" ,xhrInjectedDetails);
 
   // Extract data from Webpage
   const webpageDetails = {
@@ -423,8 +426,7 @@ function extractProblemDetails() {
     timeLimit: xhrInjectedDetails?.timeLimit || "",
     memoryLimit: xhrInjectedDetails?.memoryLimit || "",
   };
-
-  console.log(problemDetails);
+  console.log("data of problem details: \n", problemDetails);
 }
 
 function extractProblemNumber() {
@@ -494,6 +496,13 @@ function extractInputOutput() {
 // ========================================================= Injecting XHR Data =========================================================
 window.addEventListener("xhrDataInjected", (event) => {
   xhrInjectedData = event.detail;
+  console.log("xhr data : ", xhrInjectedData);
+
+  // Parse the response string into a JavaScript object
+  const parsedResponse = JSON.parse(xhrInjectedData.response);
+
+  // Now you can inspect the parsed response object
+  console.log(parsedResponse);
 });
 
 function addInjectScript() {
