@@ -14,6 +14,7 @@ const GEMINI_API_KEY = "YOUR-API-KEY";
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 let problemDetails = {};
+let xhrInjectedData = "";
 
 function onProblemsPage() {
   const pathParts = window.location.pathname.split("/");
@@ -44,6 +45,7 @@ function areRequiredElementsLoaded() {
 
 const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
+    addInjectScript();
     if (mutation.type === "childList" && onProblemsPage()) {
       if (isUrlChanged() || !document.getElementById(AI_HELP_BUTTON_ID)) {
         if (areRequiredElementsLoaded()) {
@@ -131,15 +133,21 @@ function cleanUpPage() {
   const aiHelpButton = document.getElementById(AI_HELP_BUTTON_ID);
   if (aiHelpButton) aiHelpButton.remove();
 
-  // TODO: Have to clean chat container as well
+  // Have to clean chat container as well
   const chatBoxModal = document.getElementById(CHAT_BOX_MODAL_ID);
   if (chatBoxModal) chatBoxModal.remove();
+
+  // Clean problem details as well
+  problemDetails = {};
 }
 
 // ============================================================== Chat Box ==============================================================
 function openChatBox() {
   // const chatBoxModal = document.getElementById(CHAT_BOX_MODAL_ID);
   createChatBoxModal();
+
+  // On opening model, extract all problem details
+  extractProblemDetails();
 
   const closeAiChatBoxModalButton = document.getElementById(
     CHAT_BOX_MODAL_CLOSE_BUTTON_ID
@@ -304,7 +312,6 @@ async function sendMessageToAPI(userMessage) {
         ? responseData.candidates[0].content.parts[0].text
         : "No response from the API.";
     return aiResponse;
-
   } catch (error) {
     console.error("Error fetching AI response: ", error);
     return "An error occured while connecting to the API";
@@ -345,21 +352,79 @@ function closeChatBoxModal() {
 
 // ======================================================= Extract Problem Details =======================================================
 function extractProblemDetails() {
-  // TODO : Extract data from intercepting API request
+  // Extract data from intercepting API request
+  let parsedData = "";
+  try {
+    // Parse the response string into a JavaScript object
+    parsedData = JSON.parse(xhrInjectedData.response)?.data || {};
+  } catch (error) {
+    alert("Some information wasn't loaded");
+    console.error("Failed to parse xhrInjectedData.response: ", error);
+    parsedData = {};
+  }
+  const xhrInjectedDetails = {
+    id: (parsedData?.id).toString() || "",
+    title: parsedData?.title || "",
+    description: parsedData?.body || "",
+    inputFormat: parsedData?.input_format || "",
+    outputFormat: parsedData?.output_format || "",
+    constraints: parsedData?.constraints || "",
+    note: parsedData?.note || "",
+    editorialCode: parsedData?.editorial_code || [],
+    hints: parsedData?.hints || {},
+    samples: parsedData?.samples || [],
+    timeLimit: (parsedData?.time_limit_sec).toString() || "",
+    memoryLimit: (parsedData?.memory_limit_mb).toString() || "",
+  };
+
   // Extract data from Webpage
-  const fallbackdetails = {
+  const webpageDetails = {
     id: extractProblemNumber(),
-    title: document.getElementsByClassName("Header_resource_heading__cpRp1")[0]?.textContent || "",
-    description: document.getElementsByClassName("coding_desc__pltWY")[0]?.textContent || "",
-    inputFormat: document.getElementsByClassName("coding_input_format__pv9fS problem_paragraph")[0]?.textContent || "",
-    outputFormat: document.getElementsByClassName("coding_input_format__pv9fS problem_paragraph")[1]?.textContent || "",
-    constraints: document.getElementsByClassName("coding_input_format__pv9fS problem_paragraph")[2]?.textContent || "",
-    note: document.getElementsByClassName("coding_input_format__pv9fS problem_paragraph")[3]?.textContent || "",
+    title:
+      document.getElementsByClassName("Header_resource_heading__cpRp1")[0]
+        ?.textContent || "",
+    description:
+      document.getElementsByClassName("coding_desc__pltWY")[0]?.textContent ||
+      "",
+    inputFormat:
+      document.getElementsByClassName(
+        "coding_input_format__pv9fS problem_paragraph"
+      )[0]?.textContent || "",
+    outputFormat:
+      document.getElementsByClassName(
+        "coding_input_format__pv9fS problem_paragraph"
+      )[1]?.textContent || "",
+    constraints:
+      document.getElementsByClassName(
+        "coding_input_format__pv9fS problem_paragraph"
+      )[2]?.textContent || "",
+    note:
+      document.getElementsByClassName(
+        "coding_input_format__pv9fS problem_paragraph"
+      )[3]?.textContent || "",
     inputOutput: extractInputOutput() || [],
     userCode: extractUserCode() || "",
   };
 
-  problemDetails = fallbackdetails;
+  // Final problem details (combined from both Webpage & intercepting API XMLHttpRequest)
+  problemDetails = {
+    title: xhrInjectedDetails?.title || webpageDetails?.title,
+    description: xhrInjectedDetails?.description || webpageDetails?.description,
+    inputFormat: xhrInjectedDetails?.inputFormat || webpageDetails?.inputFormat,
+    outputFormat:
+      xhrInjectedDetails?.outputFormat || webpageDetails?.outputFormat,
+    constraints: xhrInjectedDetails?.constraints || webpageDetails?.constraints,
+    samples: xhrInjectedDetails?.samples || webpageDetails?.inputOutput,
+    note: xhrInjectedDetails?.note || webpageDetails?.note,
+    hints: xhrInjectedDetails?.hints || {},
+    problemId: xhrInjectedDetails?.id || webpageDetails?.id,
+    editorialCode: xhrInjectedDetails?.editorialCode || [],
+    userCode: webpageDetails?.userCode || "",
+    timeLimit: xhrInjectedDetails?.timeLimit || "",
+    memoryLimit: xhrInjectedDetails?.memoryLimit || "",
+  };
+
+  console.log(problemDetails);
 }
 
 function extractProblemNumber() {
@@ -381,24 +446,28 @@ function extractUserCode() {
 
   const problemNo = extractProblemNumber();
 
-  let language = localStorageData['editor-language'] || "C++14";
-  if(language.startsWith('"') && language.endsWith('"')) {
-    language = language.slice(1, -1);  // -1 to end at the last character (but exclude it)
+  let language = localStorageData["editor-language"] || "C++14";
+  if (language.startsWith('"') && language.endsWith('"')) {
+    language = language.slice(1, -1); // -1 to end at the last character (but exclude it)
   }
 
   const expressionForKey = `_${problemNo}_${language}`;
-  for(let key in localStorageData) {
-    if(localStorageData.hasOwnProperty(key) && key.includes(expressionForKey) && key.endsWith(expressionForKey)) {
+  for (let key in localStorageData) {
+    if (
+      localStorageData.hasOwnProperty(key) &&
+      key.includes(expressionForKey) &&
+      key.endsWith(expressionForKey)
+    ) {
       return localStorageData[key];
     }
   }
-  return '';
+  return "";
 }
 
 function extractLocalStorage() {
   const localStorageData = {};
 
-  for(i=0; i<localStorage.length; i++) {
+  for (i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     localStorageData[key] = localStorage.getItem(key);
   }
@@ -410,14 +479,27 @@ function extractInputOutput() {
   const elements = document.querySelectorAll(".coding_input_format__pv9fS");
   const inputOutputPairs = [];
 
-  for(let i=3; i<elements.length; i+=2) {
-    if(i+1 < elements.length) {
+  for (let i = 3; i < elements.length; i += 2) {
+    if (i + 1 < elements.length) {
       const input = elements[i]?.textContent?.trim() || "";
-      const output = elements[i+1]?.textContent?.trim() || "";
-      inputOutputPairs.push({input, output});
+      const output = elements[i + 1]?.textContent?.trim() || "";
+      inputOutputPairs.push({ input, output });
     }
   }
 
   let jsonString = JSON.stringify(inputOutputPairs);
   return jsonString.replace(/\\\\n/g, "\\n");
+}
+
+// ========================================================= Injecting XHR Data =========================================================
+window.addEventListener("xhrDataInjected", (event) => {
+  xhrInjectedData = event.detail;
+});
+
+function addInjectScript() {
+  const script = document.createElement("script");
+  script.src = chrome.runtime.getURL("inject.js");
+
+  document.documentElement.insertAdjacentElement("afterbegin", script); // document.documentElement is <html> element
+  script.remove(); // immediately removes the script element from the DOM after it is injected and executed
 }
