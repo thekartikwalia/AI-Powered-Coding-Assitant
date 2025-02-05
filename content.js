@@ -15,6 +15,7 @@ const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 let problemDetails = {};
 let xhrInjectedData = "";
+let problemChatHistories = new Map();
 
 function onProblemsPage() {
   const pathParts = window.location.pathname.split("/");
@@ -144,11 +145,29 @@ function cleanUpPage() {
 
 // ============================================================== Chat Box ==============================================================
 function openChatBox() {
-  // const chatBoxModal = document.getElementById(CHAT_BOX_MODAL_ID);
+  // Create the chat box modal
   createChatBoxModal();
 
-  // On opening model, extract all problem details
+  // Extract problem details
   extractProblemDetails();
+
+  // Load chat histories from localStorage
+  loadChatHistories();
+
+  // Get conversation history for current problem
+  const conversationHistory = getChatHistoryForCurrentProblem();
+
+  const chatBoxMessagesContainer = document.getElementById(CHAT_BOX_MESSAGES_CONTAINER_ID);
+  if (chatBoxMessagesContainer && conversationHistory) {
+    chatBoxMessagesContainer.innerHTML = '';
+
+    conversationHistory.forEach(message => {
+      displayMessage(
+        message.parts[0].text,
+        message.role === "user" ? "user" : "model",
+      );
+    });
+  }
 
   const closeAiChatBoxModalButton = document.getElementById(
     CHAT_BOX_MODAL_CLOSE_BUTTON_ID
@@ -277,13 +296,17 @@ const sendMessageButtonHandler = async () => {
 
 async function sendMessageToAPI(userMessage) {
   try {
-    // Prepare the payload
+    const conversationHistory = getChatHistoryForCurrentProblem();
+
+    // Add user message to conversation history
+    conversationHistory.push({
+      role: "user",
+      parts: [{ text: userMessage }],
+    });
+
+    // Prepare the payload with the entire conversation
     const payload = {
-      contents: [
-        {
-          parts: [{ text: userMessage }],
-        },
-      ],
+      contents: conversationHistory,
     };
 
     // Send the request
@@ -312,6 +335,16 @@ async function sendMessageToAPI(userMessage) {
       responseData.candidates[0].content.parts[0].text
         ? responseData.candidates[0].content.parts[0].text
         : "No response from the API.";
+
+    // Add AI response to the conversation history
+    conversationHistory.push({
+      role: "model",
+      parts: [{ text: aiResponse }],
+    });
+
+    // Save the updated conversation history
+    saveChatHistoryForCurrentProblem(conversationHistory);
+
     return aiResponse;
   } catch (error) {
     console.error("Error fetching AI response: ", error);
@@ -346,6 +379,35 @@ function displayMessage(message, sender) {
   chatBoxMessagesContainer.scrollTop = chatBoxMessagesContainer.scrollHeight;
 }
 
+// Function to load chat histories from localStorage
+function loadChatHistories() {
+  const storedHistoriesJson = localStorage.getItem('problemChatHistories');
+  if (storedHistoriesJson) {
+    const storedHistories = JSON.parse(storedHistoriesJson);
+    console.log("storedHistoriesJson: \n", storedHistories);
+    problemChatHistories = new Map(storedHistories);
+  }
+}
+
+// Function to save chat histories to localStorage
+function saveChatHistories() {
+  const serializedHistories = Array.from(problemChatHistories.entries());
+  localStorage.setItem('problemChatHistories', JSON.stringify(serializedHistories));
+}
+
+// Function to get chat history for the current problem
+function getChatHistoryForCurrentProblem() {
+  const currentProblemId = problemDetails.problemId;
+  return problemChatHistories.get(currentProblemId) || [];
+}
+
+// Function to save chat history for the current problem
+function saveChatHistoryForCurrentProblem(chatHistory) {
+  const currentProblemId = problemDetails.problemId;
+  problemChatHistories.set(currentProblemId, chatHistory);
+  saveChatHistories();
+}
+
 function closeChatBoxModal() {
   const chatBoxModal = document.getElementById(CHAT_BOX_MODAL_ID);
   if (chatBoxModal) chatBoxModal.remove();
@@ -375,10 +437,16 @@ function extractProblemDetails() {
     editorialCode: parsedData?.editorial_code || [],
     hints: parsedData?.hints || {},
     samples: parsedData?.samples || [],
-    timeLimit: parsedData?.time_limit_sec != null ? parsedData.time_limit_sec.toString() : "",
-    memoryLimit: parsedData?.memory_limit_mb != null ? parsedData.memory_limit_mb.toString() : "",
+    timeLimit:
+      parsedData?.time_limit_sec != null
+        ? parsedData.time_limit_sec.toString()
+        : "",
+    memoryLimit:
+      parsedData?.memory_limit_mb != null
+        ? parsedData.memory_limit_mb.toString()
+        : "",
   };
-  console.log("parsedData from xhr: \n" ,xhrInjectedDetails);
+  console.log("parsedData from xhr: \n", xhrInjectedDetails);
 
   // Extract data from Webpage
   const webpageDetails = {
