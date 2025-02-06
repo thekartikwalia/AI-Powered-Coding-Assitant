@@ -3,7 +3,7 @@
 // It allows the extension to interact with and manipulate the DOM of those pages
 
 // =======================================================================================================================================
-// ============================================ Mutation observer to detect page change on SPA ===========================================
+// ============================================== Global Declarations & Environment Variables ============================================
 // =======================================================================================================================================
 let lastUrl = "";
 const AI_HELP_BUTTON_ID = "ai-help-button";
@@ -19,6 +19,10 @@ let xhrInjectedData = "";
 let problemChatHistories = new Map();
 const DELETE_CHAT_BUTTON_ID = "delete-chat-btn";
 const EXPORT_CHAT_BUTTON_ID = "export-chat-btn";
+
+// =======================================================================================================================================
+// ============================================ Mutation observer to detect page change on SPA ===========================================
+// =======================================================================================================================================
 
 function onProblemsPage() {
   const pathParts = window.location.pathname.split("/");
@@ -271,7 +275,7 @@ function createChatBoxModal() {
   const chatBoxInputField = document.createElement("div");
   chatBoxInputField.className = "d-flex mt-3 gap-3";
   chatBoxInputField.innerHTML = `
-    <input type="text" id="chat-input-field" class="form-control" placeholder="Type your message..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+    <input type="text" id="chat-input-field" class="form-control" placeholder="Type your message..." style="flex: 1 1 0%; padding: 10px; border-radius: 8px; border: 1px solid rgb(204, 204, 204); box-shadow: none;" onfocus="this.style.boxShadow='0 0 0 .25rem rgb(221 246 255)'" onblur="this.style.boxShadow='none'">
     <button id="send-chat-btn"
       class="btn btn-primary py-2 px-4"
       style="
