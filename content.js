@@ -2,7 +2,9 @@
 // It contains scripts that run directly on the webpages you visit
 // It allows the extension to interact with and manipulate the DOM of those pages
 
-// ============================================ Mutation observer to detect page change on SPA ============================================
+// =======================================================================================================================================
+// ============================================ Mutation observer to detect page change on SPA ===========================================
+// =======================================================================================================================================
 let lastUrl = "";
 const AI_HELP_BUTTON_ID = "ai-help-button";
 const CHAT_BOX_MODAL_ID = "chatbox-modal";
@@ -61,7 +63,9 @@ const observer = new MutationObserver((mutations) => {
 });
 observer.observe(document.body, { childList: true, subtree: true });
 
+// =======================================================================================================================================
 // ====================================================== Element related Functions ======================================================
+// =======================================================================================================================================
 function createElement() {
   const askDoubtButton = document.getElementsByClassName(
     "coding_ask_doubt_button__FjwXJ"
@@ -144,7 +148,9 @@ function cleanUpPage() {
   problemDetails = {};
 }
 
-// ============================================================== Chat Box ==============================================================
+// =======================================================================================================================================
+// ======================================================== Setting up Chat Box ==========================================================
+// =======================================================================================================================================
 function openChatBox() {
   // Create the chat box modal
   createChatBoxModal();
@@ -158,14 +164,16 @@ function openChatBox() {
   // Get conversation history for current problem
   const conversationHistory = getChatHistoryForCurrentProblem();
 
-  const chatBoxMessagesContainer = document.getElementById(CHAT_BOX_MESSAGES_CONTAINER_ID);
+  const chatBoxMessagesContainer = document.getElementById(
+    CHAT_BOX_MESSAGES_CONTAINER_ID
+  );
   if (chatBoxMessagesContainer && conversationHistory) {
-    chatBoxMessagesContainer.innerHTML = '';
+    chatBoxMessagesContainer.innerHTML = "";
 
-    conversationHistory.forEach(message => {
+    conversationHistory.forEach((message) => {
       displayMessage(
         message.parts[0].text,
-        message.role === "user" ? "user" : "model",
+        message.role === "user" ? "user" : "model"
       );
     });
   }
@@ -175,7 +183,7 @@ function openChatBox() {
   );
   closeAiChatBoxModalButton.addEventListener("click", closeChatBoxModal);
 
-  // Attach all event listeners after the chatBox Modal is fully loaded 
+  // Attach all event listeners after the chatBox Modal is fully loaded
   attachEventListeners();
 }
 
@@ -191,7 +199,7 @@ function createChatBoxModal() {
   // ChatBox Container
   const chatBoxContainer = document.createElement("section");
   chatBoxContainer.className = "dmsans overflow-hidden p-4";
-  chatBoxContainer.style = "max-width: 50rem; height: 100%;";    // ensuring container takes full height
+  chatBoxContainer.style = "max-width: 50rem; height: 100%;"; // ensuring container takes full height
   chatBoxModal.appendChild(chatBoxContainer);
 
   // ChatBox Section
@@ -284,7 +292,9 @@ function createChatBoxModal() {
   const chatBoxMessagesContainerSeparationLine = document.createElement("div");
   chatBoxMessagesContainerSeparationLine.className =
     "DoubtForum_border_bottom__59UoH mt-3";
-  chatBoxSectionContentContainer.appendChild(chatBoxMessagesContainerSeparationLine);
+  chatBoxSectionContentContainer.appendChild(
+    chatBoxMessagesContainerSeparationLine
+  );
 
   // Chat Actions Container (exporting chats and deleting chats from history)
   const chatActionsContainer = document.createElement("div");
@@ -294,15 +304,21 @@ function createChatBoxModal() {
     <button id="export-chat-btn" class="ant-btn css-19gw05y ant-btn-default Button_icon_text_button__pApl_ coding_footer_console_button__fZJDe px-3 px-sm-4 py-2" style="border-radius: 8px;">Export Chat</button>
   `;
   chatBoxSectionContentContainer.appendChild(chatActionsContainer);
-  
+
   document.body.insertAdjacentElement("beforeend", chatBoxModal);
   return chatBoxModal;
 }
 
 function attachEventListeners() {
-  document.getElementById(SEND_CHAT_BUTTON_ID)?.addEventListener("click", sendMessageButtonHandler);
-  document.getElementById(DELETE_CHAT_BUTTON_ID)?.addEventListener("click", deleteChatHistoryButtonHandler);
-  document.getElementById(EXPORT_CHAT_BUTTON_ID)?.addEventListener("click", exportChatHistoryButtonHandler);
+  document
+    .getElementById(SEND_CHAT_BUTTON_ID)
+    ?.addEventListener("click", sendMessageButtonHandler);
+  document
+    .getElementById(DELETE_CHAT_BUTTON_ID)
+    ?.addEventListener("click", deleteChatHistoryButtonHandler);
+  document
+    .getElementById(EXPORT_CHAT_BUTTON_ID)
+    ?.addEventListener("click", exportChatHistoryButtonHandler);
 }
 
 function deleteChatHistoryButtonHandler() {
@@ -310,8 +326,10 @@ function deleteChatHistoryButtonHandler() {
   const currentProblemId = problemDetails.problemId;
   problemChatHistories.delete(currentProblemId);
   saveChatHistories();
-  
-  const chatBoxMessagesContainer = document.getElementById(CHAT_BOX_MESSAGES_CONTAINER_ID);
+
+  const chatBoxMessagesContainer = document.getElementById(
+    CHAT_BOX_MESSAGES_CONTAINER_ID
+  );
   if (chatBoxMessagesContainer) chatBoxMessagesContainer.innerHTML = "";
 }
 
@@ -341,25 +359,25 @@ function exportChatHistoryButtonHandler() {
     }
   });
 
-  const chatHistoryFormatted = formattedMessages.join('\n\n');
+  const chatHistoryFormatted = formattedMessages.join("\n\n");
 
   // Convert Markdown to HTML using marked.parse() & render it safely using DOMPurify
   const htmlContent = DOMPurify.sanitize(marked.parse(chatHistoryFormatted));
 
   // Temporarily create an element to render the markdown as HTML
-  const markdownContainer = document.createElement('div');
+  const markdownContainer = document.createElement("div");
   markdownContainer.innerHTML = htmlContent;
 
   // Apply syntax highlighting to code blocks
   // Highlight.js will automatically highlight <code> blocks if we call it on the container
-  const codeBlocks = markdownContainer.querySelectorAll('pre code');
-  codeBlocks.forEach(block => {
+  const codeBlocks = markdownContainer.querySelectorAll("pre code");
+  codeBlocks.forEach((block) => {
     hljs.highlightBlock(block); // Highlight the block using highlight.js
   });
 
   // Now apply the necessary styling (GitHub style) to the code blocks
-  markdownContainer.querySelectorAll('pre').forEach(preBlock => {
-    preBlock.classList.add('hljs'); // Add GitHub style classes to the <pre> elements
+  markdownContainer.querySelectorAll("pre").forEach((preBlock) => {
+    preBlock.classList.add("hljs"); // Add GitHub style classes to the <pre> elements
   });
 
   // Use html2pdf to convert the HTML to a PDF
@@ -367,11 +385,15 @@ function exportChatHistoryButtonHandler() {
     .from(markdownContainer)
     .set({
       margin: [10, 5, 10, 5], // Set margins (top, right, bottom, left) in mm
-      filename: `chat-history-of-${problemDetails?.title || "problem-statement"}.pdf`,
+      filename: `chat-history-of-${
+        problemDetails?.title || "problem-statement"
+      }.pdf`,
       html2canvas: { scale: 2 }, // Optional: improves the rendering quality of images and text
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } // Optional: sets paper format
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }, // Optional: sets paper format
     })
-    .save(`chat-history-of-${problemDetails?.title || "problem-statement"}.pdf`);
+    .save(
+      `chat-history-of-${problemDetails?.title || "problem-statement"}.pdf`
+    );
 }
 
 const sendMessageButtonHandler = async () => {
@@ -380,7 +402,6 @@ const sendMessageButtonHandler = async () => {
 
   const userInput = inputField.value;
   if (!userInput) return;
-
   console.log("User Input: ", userInput);
 
   // Display user message in chatbox
@@ -389,97 +410,28 @@ const sendMessageButtonHandler = async () => {
   // clear the input field after sending the message
   inputField.value = "";
 
+  const currentProblemId = problemDetails?.problemId;
+  const chatHistory = problemChatHistories.get(currentProblemId) || [];
+
   // Send message to API and get response
-  const chatBotReply = await sendMessageToAPI(userInput);
+  let chatBotReply;
+  if (chatHistory.length == 0) {
+    // First message for this problem: generate the initial prompt
+    const initialPrompt = generatePrompt(userInput, problemDetails?.userCode);
+
+    // Send the message to API with prompt engineering
+    chatBotReply = await sendMessageToAPI(initialPrompt, userInput);
+  } else {
+    const prompt = codePrompt(problemDetails?.userCode, userInput);
+
+    // For subsequent messages, only apply codePrompt to user input
+    chatBotReply = await sendMessageToAPI(prompt, userInput);
+  }
   console.log("Bot reply: \n", chatBotReply);
 
   // Display bot response in chatbox
   displayMessage(chatBotReply, "model");
 };
-
-function getApiKey() {
-  return new Promise((resolve, reject) => {
-    chrome.storage.local.get("apiKey", (result) => {
-      if (result.apiKey) {
-        resolve(result.apiKey);
-      } else {
-        alert("API key not found. Please set it in the popup.")
-        reject("API key not found. Please set it in the popup.");
-      }
-    });
-  });
-}
-
-async function sendMessageToAPI(userMessage) {
-  try {
-    // Check for userMessage being empty
-    if(!userMessage) {
-      alert("No message entered. Please provide a valid message.");
-      return;
-    }
-
-    // Get the API key from Popup
-    const GEMINI_API_KEY = await getApiKey();
-    if (!GEMINI_API_KEY) {
-      alert("No API key found. Please provide a valid API key.");
-      return;
-    }
-
-    const conversationHistory = getChatHistoryForCurrentProblem();
-
-    // Add user message to conversation history
-    conversationHistory.push({
-      role: "user",
-      parts: [{ text: userMessage }],
-    });
-
-    // Prepare the payload with the entire conversation
-    const payload = {
-      contents: conversationHistory,
-    };
-
-    // Send the request
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    // Parse the JSON response
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
-    }
-
-    const responseData = await response.json();
-
-    // Extract AI response text from the API response
-    const aiResponse =
-      responseData.candidates &&
-      responseData.candidates[0] &&
-      responseData.candidates[0].content &&
-      responseData.candidates[0].content.parts &&
-      responseData.candidates[0].content.parts[0] &&
-      responseData.candidates[0].content.parts[0].text
-        ? responseData.candidates[0].content.parts[0].text
-        : "No response from the API.";
-
-    // Add AI response to the conversation history
-    conversationHistory.push({
-      role: "model",
-      parts: [{ text: aiResponse }],
-    });
-
-    // Save the updated conversation history
-    saveChatHistoryForCurrentProblem(conversationHistory);
-
-    return aiResponse;
-  } catch (error) {
-    console.error("Error fetching AI response: ", error);
-    return "An error occured while connecting to the API";
-  }
-}
 
 function displayMessage(message, sender) {
   const chatBoxMessagesContainer = document.getElementById(
@@ -493,7 +445,7 @@ function displayMessage(message, sender) {
   }`;
 
   const messageBubble = document.createElement("div");
-  if(sender === "model") {
+  if (sender === "model") {
     // Sanitize & Render Markdown
     messageBubble.innerHTML = DOMPurify.sanitize(marked.parse(message));
 
@@ -509,9 +461,10 @@ function displayMessage(message, sender) {
       ? "bg-primary text-white"
       : "text-dark border border-secondary"
   }`;
-  messageBubble.style = sender === "user"
-  ? "max-width: 70%; background: linear-gradient(90deg,var(--gradient_dark_button_color_1),var(--gradient_dark_button_color_2));"
-  : "max-width: 70%; background: linear-gradient(to left, var(--gradient_light_button_color_1) 0, var(--gradient_light_button_color_2));"; 
+  messageBubble.style =
+    sender === "user"
+      ? "max-width: 70%; background: linear-gradient(90deg,var(--gradient_dark_button_color_1),var(--gradient_dark_button_color_2));"
+      : "max-width: 70%; background: linear-gradient(to left, var(--gradient_light_button_color_1) 0, var(--gradient_light_button_color_2));";
 
   messageElement.appendChild(messageBubble);
   chatBoxMessagesContainer.appendChild(messageElement);
@@ -522,7 +475,7 @@ function displayMessage(message, sender) {
 
 // Function to load chat histories from localStorage
 function loadChatHistories() {
-  const storedHistoriesJson = localStorage.getItem('problemChatHistories');
+  const storedHistoriesJson = localStorage.getItem("problemChatHistories");
   if (storedHistoriesJson) {
     const storedHistories = JSON.parse(storedHistoriesJson);
     console.log("storedHistoriesJson: \n", storedHistories);
@@ -533,7 +486,10 @@ function loadChatHistories() {
 // Function to save chat histories to localStorage
 function saveChatHistories() {
   const serializedHistories = Array.from(problemChatHistories.entries());
-  localStorage.setItem('problemChatHistories', JSON.stringify(serializedHistories));
+  localStorage.setItem(
+    "problemChatHistories",
+    JSON.stringify(serializedHistories)
+  );
 }
 
 // Function to get chat history for the current problem
@@ -554,7 +510,9 @@ function closeChatBoxModal() {
   if (chatBoxModal) chatBoxModal.remove();
 }
 
+// =======================================================================================================================================
 // ======================================================= Extract Problem Details =======================================================
+// =======================================================================================================================================
 function extractProblemDetails() {
   // Extract data from intercepting API request
   let parsedData = "";
@@ -702,7 +660,9 @@ function extractInputOutput() {
   return jsonString.replace(/\\\\n/g, "\\n");
 }
 
-// ========================================================= Injecting XHR Data =========================================================
+// =======================================================================================================================================
+// ========================================================= Injecting XHR Data ==========================================================
+// =======================================================================================================================================
 window.addEventListener("xhrDataInjected", (event) => {
   xhrInjectedData = event.detail;
   console.log("xhr data : ", xhrInjectedData);
@@ -720,4 +680,212 @@ function addInjectScript() {
 
   document.documentElement.insertAdjacentElement("afterbegin", script); // document.documentElement is <html> element
   script.remove(); // immediately removes the script element from the DOM after it is injected and executed
+}
+
+// =======================================================================================================================================
+// ========================================================== Setting up API =============================================================
+// =======================================================================================================================================
+function getApiKey() {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get("apiKey", (result) => {
+      if (result.apiKey) {
+        resolve(result.apiKey);
+      } else {
+        alert("API key not found. Please set it in the popup.");
+        reject("API key not found. Please set it in the popup.");
+      }
+    });
+  });
+}
+
+async function sendMessageToAPI(prompt, userMessage) {
+  try {
+    // Get the API key from Popup
+    const GEMINI_API_KEY = await getApiKey();
+    if (!GEMINI_API_KEY) {
+      alert("No API key found. Please provide a valid API key.");
+      return;
+    }
+
+    // Prepare the payload with the entire conversation
+    const conversationHistory = getChatHistoryForCurrentProblem();
+    const payload = {
+      contents: [
+        ...conversationHistory,
+        { role: "user", parts: [{ text: prompt }] },
+      ],
+    };
+
+    // Send the request
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    // Parse the JSON response
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+
+    const responseData = await response.json();
+
+    // Extract AI response text from the API response
+    const aiResponse =
+      responseData.candidates &&
+      responseData.candidates[0] &&
+      responseData.candidates[0].content &&
+      responseData.candidates[0].content.parts &&
+      responseData.candidates[0].content.parts[0] &&
+      responseData.candidates[0].content.parts[0].text
+        ? responseData.candidates[0].content.parts[0].text
+        : "No response from the API.";
+
+    // Add the user input to the conversation history
+    conversationHistory.push({
+      role: "user",
+      parts: [{ text: prompt }],
+    });
+
+    // Add AI response to the conversation history
+    conversationHistory.push({
+      role: "model",
+      parts: [{ text: aiResponse }],
+    });
+
+    // Save the updated conversation history
+    saveChatHistoryForCurrentProblem(conversationHistory);
+
+    return aiResponse;
+  } catch (error) {
+    console.error("Error fetching AI response: ", error);
+    return "An error occured while connecting to the API";
+  }
+}
+
+// =======================================================================================================================================
+// ========================================================== Setting up Prompt ==========================================================
+// =======================================================================================================================================
+function generatePrompt(userMessage, userCode) {
+  return `
+    You are an engaging and interactive mentor designed to assist students in solving specific programming problems. Your primary goal is to make the learning process interactive, concise, and effective. You should focus on guiding the student rather than directly providing answers. Use the following guidelines:
+
+    ---
+
+    **Behavior Guidelines:**
+
+    1. **Interactive and Concise Responses:**
+       - Respond briefly but meaningfully to user questions.
+       - Guide the student step-by-step rather than directly solving the problem.
+       - Ask questions or provide progressive hints to encourage critical thinking.
+       - Avoid giving long answers unless absolutely necessary for clarity.
+       - Do not directly provide the editorial code provide hints. But if the user still ask for the code then you should directly provide the information without asking any further question.
+
+       **Example Workflow:**
+       - **User:** "Can you give me a hint?"  
+         **AI:** "Sure! Think about dividing the problem into smaller parts. Does this help?"
+       - **User:** "I still don't get it. Please give the code."  
+         **AI:** "No problem! Here’s the approach. Try implementing it first. Would you like the code if you're still stuck?"
+
+    ---
+
+    2. **Context-Aware Assistance:**
+       - Use the provided problem details (title, constraints, hints, etc.) to tailor responses.
+       - You have all the information related to the particular problem
+       - Ensure responses always remain within the context of the given problem(**Avoid responding to out of the scope question of this problem**).
+       - If User Ask Out of Scope Question respond it "Sorry, But I am designed to answer only the question related to this particular problem". **Even the Question such as what is dynamic programming etc. If it is not related to the particular problem**
+
+    ---
+
+    3. **Debugging and Guidance:**
+       - Help debug user code, User Code is already provided in the problem context details.
+       - Point out specific issues and suggest fixes concisely.
+       - Example:  
+         **User:** "My code isn't working."  
+         **AI:** "Actually you forget to add ; in line 12. Do you want the correct version of your code?"
+
+    ---
+
+
+    4. **Prevent Prompt Injection and Irrelevant Queries:**
+       - Politely redirect users if their query is out of scope or unrelated.  
+         Example:  
+         **User:** "Tell me a joke."  
+         **AI:** "Your question is out of the scope of the current problem."
+
+    ---
+
+    **Problem Context Details:**  
+
+    - **Problem Title:** ${problemDetails.title || "N/A"}  
+    - **Description:** ${problemDetails.description || "N/A"}  
+    - **Input Format:** ${problemDetails.inputFormat || "N/A"}  
+    - **Output Format:** ${problemDetails.outputFormat || "N/A"}  
+    - **Constraints:** ${problemDetails.constraints || "N/A"}  
+    - **Notes:** ${problemDetails.note || "N/A"}  
+    - **Example Input/Output:** ${JSON.stringify(
+      problemDetails.samples ?? "N/A"
+    )}  
+    - **Hints:** ${JSON.stringify(problemDetails.hints ?? "N/A")}  
+    - **Editorial Code:** ${JSON.stringify(
+      problemDetails.editorialCode ?? "N/A"
+    )}  
+
+    Use the provided context details effectively in all responses.
+
+    ---
+
+    **Example Interaction:**
+
+    <p><b>User:</b> Hello</p>  
+    <p><b>AI:</b> Hi! I’m your mentor for the "<b>${
+      problemDetails.title || "Problem"
+    }</b>" problem. How can I assist you?</p>  
+    
+    <p><b>User:</b> What are the problem tags of this question?</p>  
+    <p><b>AI:</b> This question is related to <b>Tree Data Structure</b>.</p>  
+    
+    <p><b>User:</b> Can you give me the approach to solve it?</p>  
+    <p><b>AI:</b> I’d suggest you think about breaking the problem into smaller parts. Would you like a hint?</p>  
+    
+    <p><b>User:</b> Yes, please.</p>  
+    <p><b>AI:</b> Try using a map to store the frequency of elements. Does this give you an idea?</p>  
+    
+    <p><b>User:</b> I can’t solve it. Please provide the editorial code.</p>  
+    <p><b>AI:</b> No problem! Here’s the approach to solve the problem. Try implementing it yourself first. If you need further help, let me know!</p>
+    
+    <pre>
+    function solveProblem(input) {
+      // Code snippet here
+    }
+    </pre>
+    
+    ---
+
+    **Current User Message:**
+    <p><b>User:</b> ${userMessage}</p>
+
+    **Current User Code:**
+    <pre>
+    ${userCode}
+    </pre>
+
+    ---
+    
+    Follow these Behaviour Guidelines strictly and learn from the Example Interaction to provide a interactive response.
+  `;
+}
+
+function codePrompt(code, userMessage) {
+  return `
+    The user has provided the following code for context:
+    ${code}
+
+    **Important:** Only use this user code if they explicitly request help with debugging, fixing, or modifying it. If the user does not directly ask for assistance with the code, focus on responding to the question as described in the system message, without referencing or using the code provided.
+
+    User's question:
+    ${userMessage}
+  `;
 }
