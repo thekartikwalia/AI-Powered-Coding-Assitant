@@ -16,7 +16,8 @@ const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 let problemDetails = {};
 let xhrInjectedData = "";
-let problemChatHistories = new Map();
+let problemChatHistoriesForAPI = new Map();
+let problemChatHistoriesForDisplay = new Map();
 const DELETE_CHAT_BUTTON_ID = "delete-chat-btn";
 const EXPORT_CHAT_BUTTON_ID = "export-chat-btn";
 
@@ -166,7 +167,7 @@ function openChatBox() {
   loadChatHistories();
 
   // Get conversation history for current problem
-  const conversationHistory = getChatHistoryForCurrentProblem();
+  const conversationHistory = getChatHistoryForCurrentProblemForDisplay();
 
   const chatBoxMessagesContainer = document.getElementById(
     CHAT_BOX_MESSAGES_CONTAINER_ID
@@ -327,9 +328,11 @@ function attachEventListeners() {
 
 function deleteChatHistoryButtonHandler() {
   console.log("delete chat button clicked");
-  const currentProblemId = problemDetails.problemId;
-  problemChatHistories.delete(currentProblemId);
-  saveChatHistories();
+  const currentProblemId = problemDetails?.problemId;
+  problemChatHistoriesForAPI.delete(currentProblemId);
+  problemChatHistoriesForDisplay.delete(currentProblemId);
+  saveChatHistoriesForAPI();
+  saveChatHistoriesForDisplay();
 
   const chatBoxMessagesContainer = document.getElementById(
     CHAT_BOX_MESSAGES_CONTAINER_ID
@@ -340,7 +343,8 @@ function deleteChatHistoryButtonHandler() {
 function exportChatHistoryButtonHandler() {
   console.log("export chat button clicked");
   const currentProblemId = problemDetails.problemId;
-  const chatHistory = problemChatHistories.get(currentProblemId) || [];
+  const chatHistory =
+    problemChatHistoriesForDisplay.get(currentProblemId) || [];
 
   let formattedMessages = [];
 
@@ -415,7 +419,7 @@ const sendMessageButtonHandler = async () => {
   inputField.value = "";
 
   const currentProblemId = problemDetails?.problemId;
-  const chatHistory = problemChatHistories.get(currentProblemId) || [];
+  const chatHistory = problemChatHistoriesForAPI.get(currentProblemId) || [];
 
   // Send message to API and get response
   let chatBotReply;
@@ -477,36 +481,69 @@ function displayMessage(message, sender) {
   chatBoxMessagesContainer.scrollTop = chatBoxMessagesContainer.scrollHeight;
 }
 
-// Function to load chat histories from localStorage
+// Function to load both chat histories from localStorage
 function loadChatHistories() {
-  const storedHistoriesJson = localStorage.getItem("problemChatHistories");
-  if (storedHistoriesJson) {
-    const storedHistories = JSON.parse(storedHistoriesJson);
-    console.log("storedHistoriesJson: \n", storedHistories);
-    problemChatHistories = new Map(storedHistories);
+  // load problem chat histories for API (containing prompt)
+  const storedHistoriesJsonForAPI = localStorage.getItem(
+    "problemChatHistoriesForAPI"
+  );
+  if (storedHistoriesJsonForAPI) {
+    const storedHistoriesForAPI = JSON.parse(storedHistoriesJsonForAPI);
+    console.log("storedHistoriesJsonForAPI: \n", storedHistoriesForAPI);
+    problemChatHistoriesForAPI = new Map(storedHistoriesForAPI);
+  }
+
+  // load problem chat histories for Display
+  const storedHistoriesJsonForDisplay = localStorage.getItem(
+    "problemChatHistoriesForDisplay"
+  );
+  if (storedHistoriesJsonForDisplay) {
+    const storedHistoriesForDisplay = JSON.parse(storedHistoriesJsonForDisplay);
+    console.log("storedHistoriesJsonForDisplay: \n", storedHistoriesForDisplay);
+    problemChatHistoriesForDisplay = new Map(storedHistoriesForDisplay);
   }
 }
 
 // Function to save chat histories to localStorage
-function saveChatHistories() {
-  const serializedHistories = Array.from(problemChatHistories.entries());
+function saveChatHistoriesForAPI() {
+  const serializedHistoriesForAPI = Array.from(
+    problemChatHistoriesForAPI.entries()
+  );
   localStorage.setItem(
-    "problemChatHistories",
-    JSON.stringify(serializedHistories)
+    "problemChatHistoriesForAPI",
+    JSON.stringify(serializedHistoriesForAPI)
+  );
+}
+function saveChatHistoriesForDisplay() {
+  const serializedHistoriesForDisplay = Array.from(
+    problemChatHistoriesForDisplay.entries()
+  );
+  localStorage.setItem(
+    "problemChatHistoriesForDisplay",
+    JSON.stringify(serializedHistoriesForDisplay)
   );
 }
 
 // Function to get chat history for the current problem
-function getChatHistoryForCurrentProblem() {
+function getChatHistoryForCurrentProblemForAPI() {
   const currentProblemId = problemDetails.problemId;
-  return problemChatHistories.get(currentProblemId) || [];
+  return problemChatHistoriesForAPI.get(currentProblemId) || [];
+}
+function getChatHistoryForCurrentProblemForDisplay() {
+  const currentProblemId = problemDetails.problemId;
+  return problemChatHistoriesForDisplay.get(currentProblemId) || [];
 }
 
 // Function to save chat history for the current problem
-function saveChatHistoryForCurrentProblem(chatHistory) {
+function saveChatHistoryForCurrentProblemForAPI(chatHistory) {
   const currentProblemId = problemDetails.problemId;
-  problemChatHistories.set(currentProblemId, chatHistory);
-  saveChatHistories();
+  problemChatHistoriesForAPI.set(currentProblemId, chatHistory);
+  saveChatHistoriesForAPI();
+}
+function saveChatHistoryForCurrentProblemForDisplay(chatHistory) {
+  const currentProblemId = problemDetails.problemId;
+  problemChatHistoriesForDisplay.set(currentProblemId, chatHistory);
+  saveChatHistoriesForDisplay();
 }
 
 function closeChatBoxModal() {
@@ -712,10 +749,12 @@ async function sendMessageToAPI(prompt, userMessage) {
     }
 
     // Prepare the payload with the entire conversation
-    const conversationHistory = getChatHistoryForCurrentProblem();
+    const conversationHistoryForAPI = getChatHistoryForCurrentProblemForAPI();
+    const conversationHistoryForDisplay =
+      getChatHistoryForCurrentProblemForDisplay();
     const payload = {
       contents: [
-        ...conversationHistory,
+        ...conversationHistoryForAPI,
         { role: "user", parts: [{ text: prompt }] },
       ],
     };
@@ -748,19 +787,28 @@ async function sendMessageToAPI(prompt, userMessage) {
         : "No response from the API.";
 
     // Add the user input to the conversation history
-    conversationHistory.push({
+    conversationHistoryForAPI.push({
       role: "user",
       parts: [{ text: prompt }],
     });
+    conversationHistoryForDisplay.push({
+      role: "user",
+      parts: [{ text: userMessage }],
+    });
 
     // Add AI response to the conversation history
-    conversationHistory.push({
+    conversationHistoryForAPI.push({
+      role: "model",
+      parts: [{ text: aiResponse }],
+    });
+    conversationHistoryForDisplay.push({
       role: "model",
       parts: [{ text: aiResponse }],
     });
 
     // Save the updated conversation history
-    saveChatHistoryForCurrentProblem(conversationHistory);
+    saveChatHistoryForCurrentProblemForAPI(conversationHistoryForAPI);
+    saveChatHistoryForCurrentProblemForDisplay(conversationHistoryForDisplay);
 
     return aiResponse;
   } catch (error) {
