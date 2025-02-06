@@ -10,7 +10,6 @@ const CHAT_BOX_MODAL_CLOSE_BUTTON_ID = "close-ai-chatbox-modal-button";
 const CHAT_BOX_MESSAGES_CONTAINER_ID = "chat-messages-container";
 const CHAT_INPUT_FIELD_ID = "chat-input-field";
 const SEND_CHAT_BUTTON_ID = "send-chat-btn";
-const GEMINI_API_KEY = "YOUR-API-KEY";
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 let problemDetails = {};
@@ -398,8 +397,34 @@ const sendMessageButtonHandler = async () => {
   displayMessage(chatBotReply, "model");
 };
 
+function getApiKey() {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get("apiKey", (result) => {
+      if (result.apiKey) {
+        resolve(result.apiKey);
+      } else {
+        alert("API key not found. Please set it in the popup.")
+        reject("API key not found. Please set it in the popup.");
+      }
+    });
+  });
+}
+
 async function sendMessageToAPI(userMessage) {
   try {
+    // Check for userMessage being empty
+    if(!userMessage) {
+      alert("No message entered. Please provide a valid message.");
+      return;
+    }
+
+    // Get the API key from Popup
+    const GEMINI_API_KEY = await getApiKey();
+    if (!GEMINI_API_KEY) {
+      alert("No API key found. Please provide a valid API key.");
+      return;
+    }
+
     const conversationHistory = getChatHistoryForCurrentProblem();
 
     // Add user message to conversation history
