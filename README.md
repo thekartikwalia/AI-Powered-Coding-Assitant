@@ -37,12 +37,12 @@ An interactive browser extension designed to enhance coding problem-solving by p
 
 1. Clone the repository:
     ```bash
-    `git clone https://github.com/thekartikwalia/AI-Powered-Coding-Assitant`
+    git clone https://github.com/thekartikwalia/AI-Powered-Coding-Assitant
     ```
 
 2. Navigate to the project directory:
     ```bash
-    `cd AI-Powered-Coding-Assistant`
+    cd AI-Powered-Coding-Assistant
     ```
 
 3. Load the extension into Chrome:
